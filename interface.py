@@ -1,6 +1,8 @@
 
 import tkinter as tk
 from PIL import ImageTk, Image
+import time
+import math
 
 
 class AppInterface(tk.Tk):
@@ -54,6 +56,14 @@ class AppPage(tk.Frame):
 
         self.index = 0
 
+        # inaccurace word count
+        self.inacc_word_count = 0
+        self.correct_word_count = 0
+
+        # for timer
+        self.start_time = None
+        self.timer_start = True
+
     def gen_char(self):
         """ create the series of the labels to show the sentences into the user interface """
         row = 0
@@ -80,25 +90,48 @@ class AppPage(tk.Frame):
     def key_pressed(self, event):
         """ activates when user pressed any keys """
         # checking the key
+        self.timer(start_again=self.timer_start)
         self.check_key(event.char)
+        self.calc_cps()
 
     def check_key(self, key):
         if self.index < len(self.box_list):
             box_key = self.box_list[self.index].cget('text')
 
             if box_key == key:
+                self.correct_word_count += 1
                 # coloring the key green when it matches
                 self.box_list[self.index].config(bg='green')
             else:
                 # coloring the key red when it doesn't matches
                 self.box_list[self.index].config(bg='red')
+                self.inacc_word_count += 1
+
+                # calculating the accuracy
+                self.calc_accuracy()
 
             # increasing the index to check next key
             self.index += 1
 
-    def calc_stats(self):
+    def calc_stats(self,):
         # this will check the accuracy and the typing the speed of the user
         pass
+
+    def calc_accuracy(self):
+        inaccuracy = self.inacc_word_count/len(self.box_list) * 100
+        acc = 100 - inaccuracy
+        self.accuracy.config(text=f'{math.floor(acc)} %')
+
+    def timer(self, start_again):
+        if start_again:
+            self.start_time = time.time()
+            self.timer_start = False
+
+    def calc_cps(self):
+        end_time = time.time()
+        time_elpased = end_time - self.start_time
+        char_per_second = self.correct_word_count/(time_elpased/60)
+        self.speed.config(text=f'{math.floor(char_per_second)} CPM')
 
     def set_lesson(self):
         pass
