@@ -3,6 +3,7 @@ import tkinter as tk
 from PIL import ImageTk, Image
 import time
 import math
+import json
 
 
 class AppInterface(tk.Tk):
@@ -21,7 +22,7 @@ class AppPage(tk.Frame):
     def __init__(self, master=None):
         tk.Frame.__init__(self, master)
         self.grid()
-        self.data = "crazy fox jump over the lazy dog and get drunked with the bottle of wine Integer aliquet, massa id lobortis convallis, tortor risus dapibus augue, vel accumsan tellus.Aliquam sit amet diam in magna bibendum imperdiet. Nullam orci pede, venenatis non, sodales sed, tincidunt eu, felis."
+        self.data = None
 
         # more ui
         self.user_label = tk.Label(
@@ -34,14 +35,14 @@ class AppPage(tk.Frame):
 
         # setuping the box for the characters
         self.char_var = None
-        self.canvas_frame = tk.Frame(self,  borderwidth=2,
+        self.canvas_frame = tk.Frame(self,
                                      highlightbackground='black', highlightthickness=2)
         self.canvas_frame.grid(column=0, row=2, padx=50,
-                               ipadx=20, pady=20, columnspan=2)
+                               ipadx=20, columnspan=2)
 
         # char_canvas
         self.char_canvas = tk.Canvas(
-            self.canvas_frame, width=1000, height=250)
+            self.canvas_frame, width=1000, height=265)
         self.char_canvas.grid(row=1, column=1, sticky='news', padx=15)
         self.char_canvas.config(scrollregion=self.char_canvas.bbox("all"))
 
@@ -60,8 +61,6 @@ class AppPage(tk.Frame):
         self.char_canvas.create_window(
             (0, 0), window=self.char_frame, anchor='nw')
 
-        self.gen_char()
-
         self.accuracy = tk.Label(
             self, text=f'Accuracy: {0}', textvariable='', font=("Arial, 20"))
         self.accuracy.grid(column=0, row=3)
@@ -71,7 +70,7 @@ class AppPage(tk.Frame):
 
         # buttons for next lessons
         self.next_lesson = tk.Button(self,
-                                     text='Next Lesson', command=self.set_lesson, font=("Arial", 20), state='disabled')
+                                     text='Next Lesson', command=self.set_next_lesson, font=("Arial", 20), state='disabled')
         self.next_lesson.grid(column=0, columnspan=2, row=4)
      # generating the characters
         self.bind("<Key>", self.key_pressed)
@@ -81,17 +80,29 @@ class AppPage(tk.Frame):
         # inaccurace word count
         self.inacc_word_count = 0
         self.correct_word_count = 0
+        self.halt_until_correct = False
+        self.inacc_word_limit = 0
 
         # for timer
         self.start_time = None
         self.timer_start = True
+
+        # set initial lesson
+        self.lesson_no = 1
+        self.lesson = None
+
+        # load the lesson
+        self.load_lessons()
+
+        # generate the characters
+        self.gen_char()
 
     def gen_char(self):
         """ create the series of the labels to show the sentences into the user interface """
         row = 0
         col = 0
         self.box_list = []
-        for num, char in enumerate(self.data):
+        for num, char in enumerate(self.lesson):
             # creating the variable from string
             my_box = f'self.char_boxes_{num}'
             myVars = vars()
@@ -113,21 +124,33 @@ class AppPage(tk.Frame):
         """ activates when user pressed any keys """
         # checking the key
         self.timer()
-        self.check_key(event.char)
-        self.calc_cps()
+        print(event.char)
+        if event.char != "":
+            self.check_key(event.char)
+            self.calc_cps()
 
     def check_key(self, key):
+
         if self.index < len(self.box_list):
             box_key = self.box_list[self.index].cget('text')
-
             if box_key == key:
+                self.halt_until_correct = False
+                self.inacc_word_limit = 0
+
                 self.correct_word_count += 1
                 # coloring the key green when it matches
                 self.box_list[self.index].config(bg='green')
+
+            elif self.halt_until_correct:
+                return
             else:
                 # coloring the key red when it doesn't matches
-                self.box_list[self.index].config(bg='red')
                 self.inacc_word_count += 1
+                self.inacc_word_limit += 1
+                self.box_list[self.index].config(bg='red')
+
+                if self.inacc_word_limit != 0 and self.inacc_word_limit % 3 == 0:
+                    self.halt_until_correct = True
 
                 # calculating the accuracy
                 self.calc_accuracy()
@@ -136,8 +159,9 @@ class AppPage(tk.Frame):
         else:
             self.next_lesson.config(state='normal')
             self.master.unbind("<Key>")
-        if (self.correct_word_count + self.inacc_word_count) % 100 == 0:
-            self.scroll_units += 1
+        total_word_count = self.correct_word_count + self.inacc_word_count
+        if total_word_count != 0 and total_word_count % 50 == 0:
+            self.scroll_units = 2
             self.char_canvas.yview_scroll(self.scroll_units, what=['units'])
 
     def calc_stats(self,):
@@ -160,10 +184,17 @@ class AppPage(tk.Frame):
         char_per_second = self.correct_word_count/(time_elpased/60)
         self.speed.config(text=f'{math.floor(char_per_second)} CPM')
 
-    def set_lesson(self):
+    def set_next_lesson(self):
         self.reset_ui()
-        self.data = "Donec dapibus. Duis at velit eu est congue elementum. In hac habitasse platea dictumst. Morbi vestibulum, velit id pretium iaculis, diam erat fermentum justo, nec condimentum neque sapien placerat ante."
+        self.lesson = self.data[f'lesson_{self.lesson_no + 1}']
         self.gen_char()
+
+    def load_lessons(self):
+        with open("data.json") as file:
+            self.data = json.load(file)
+        # self.data = {value for item in self.data for value in item.values()}
+        self.data = {key: val for k in self.data for key, val in k.items()}
+        self.lesson = self.data[f'lesson_{self.lesson_no}']
 
     def reset_ui(self):
         # activating the events
