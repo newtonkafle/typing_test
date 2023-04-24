@@ -1,7 +1,9 @@
 import tkinter as tk
-from tkinter import StringVar
+from tkinter import StringVar, font
 from logic import Logic
 from user_avatar_api import Logo
+import random
+
 
 
 class AppInterface(tk.Tk):
@@ -11,30 +13,153 @@ class AppInterface(tk.Tk):
         self.geometry("1050x450")
         self.frame = AppAccountPage(self)
         # self.frame = AppPage(self)
-        # self.bind("<Key>", self.frame.key_pressed)
+        self.bind("<Key>", self.frame.key_pressed)
 
 
 class AppAccountPage(tk.Frame):
     def __init__(self, master=None):
-        tk.Frame.__init__(self, master)
+        tk.Frame.__init__(self, master,)
         master.geometry("700x300")
-        self.grid()
+        self.pack()
         self.logo_api = Logo()
+        self.heading_text = "PROTYPER"
+        self.color_list = ['white', 'red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'orange', 'purple', 'pink', 'gray', 'lightgray', 'darkgray', 'brown', 'navy', 'turquoise', 'violet', 'gold', 'silver']
+        #binding the key pressed
+        self.bind("<Key>", self.key_pressed)
+        
+        # name of the person
+        self.name = []
+        
+        #last item last text
+        self.name_container = []
+        self.name_text = []
+        
+    
+        #initializing the co-ordinate\
+        self.co_ord = {"x1":200,
+                       "x2": 230,
+                       "y1": 150,
+                       "y2": 180,
+                       "r": 5}
+        
+        # pencil location
+        self.pencil_location = None
+        
+        # creating the canvas for background image 
+        self.background_canvas = tk.Canvas(self, width=700, height=300)
+        self.background_canvas.create_image(350, 150, image = self.logo_api.background)
+        self.background_canvas.pack(fill=tk.BOTH, expand=True)
+        
+        # creating the outer frame
+        self.outer_frame = tk.Frame(self.background_canvas, highlightthickness=0)
+        
+        # creating the window to add frame on top of that canvas
+        self.background_canvas.create_window(350, 150, window=self.outer_frame)
+        
+        # frame for the logo and the name
+        self.logo_frame = tk.Frame(self.outer_frame, highlightthickness=0, highlightbackground="#000000")
+        self.logo_frame.grid(row=0, column=0)
+        
+        # label for asking the user name
+        self.app_name = self.background_canvas.create_text(350, 120, text="Enter Your Name.", font=('Press Start 2P', 20, 'bold'))
+        # self.app_name.grid(padx=(40, 0), row=1, column=0)
 
-        # label for the name of the app and logo
-        self.app_name = tk.Label(self, text="Pro Typer", font=("Arial, 30 bold"))
-        self.app_name.grid(padx=(40, 0), row=1, column=0)
+        #typing logo
+        self.pencil_logo = self.background_canvas.create_image(230, 150, image=self.logo_api.pencil_image)
 
-        # typing logo
-        self.image_canvas = tk.Canvas(self, width=100, height=100)
-        self.image_canvas.grid(row=0, column=0, padx=(40, 0), pady=(50, 0))
-        self.image_canvas.create_image(53, 50, image=self.logo_api.logo)
+# --------------------------# ----------------------------------------
+        # # # # line
+        # self.background_canvas.create_line(20, 10, 20, 400, width=3)
+# -------------------#-----------------------#-------------------------
+        # user avatar
+        self.background_canvas.create_image(100, 150, image=self.logo_api.avatar)
+        
+     
+        
+        self.buid_text_container()
+        
+#         # create account btn
+#         self.create_user_btn = tk.Button(self.user_frame, text="Let's Go", command="", font=("Arial, 15 bold"))
+#         self.create_user_btn.grid(row=3, column=0)
 
-        # line
-        self.line_canvas = tk.Canvas(self)
-        self.line_canvas.grid(row=0, column=1, rowspan=2, pady=(30, 0))
-        self.line_canvas.create_line(20, 10, 20, 400, width=3)
+    def buid_text_container(self):
+        x1, y1 = 200, 10
+        x2, y2 = 250, 60
+        r = 20  # radius of corners
+        
+        for char in self.heading_text:
+            # creating the random color to fill
+            color = random.choice(self.color_list)
+            # creating the container using the cor-ordinate
+            self.containter_builder(x1, y1, x2, y2, r, color=color)
+            
+            # creating the center co-ordinate for the char
+            x_center = (x1 + x2)/2
+            y_center = (y1 + y2)/2    
+            self.background_canvas.create_text(x_center, y_center, text=char, font=('Press Start 2P', 25, 'bold'), fill="black")
+            
+            # displacing the item by 40 units on x-axis
+            x1 += 40
+            x2 += 40
+        
+    def containter_builder(self, x1, y1, x2, y2, r, color=None):
+        # calculate coordinates of polygon vertices
+        points = [
+            x1+r, y1,  # top left
+            x2-r, y1,  # top right
+            x2, y1+r,  # top right corner
+            x2, y2-r,  # bottom right corner
+            x2-r, y2,  # bottom right
+            x1+r, y2,  # bottom left
+            x1, y2-r,  # bottom left corner
+            x1, y1+r,  # top left corner
+        ]
+        item = self.background_canvas.create_polygon(points, outline=color, fill=color, width=2) 
+        return item
+    
+    def key_pressed(self, event): 
+        color = random.choice(self.color_list)
+        if event.char.isalnum():
+            if len(self.name) >= 10:
+                return
+            self.pencil_location = self.co_ord['x2'] + 20
+            # append the char in name:
+            self.name.append(event.char)
+            
+            # build the container
+            self.name_container.append(self.containter_builder(self.co_ord['x1'], self.co_ord['y1'], self.co_ord['x2'], self.co_ord['y2'], self.co_ord['r'], color=color))
 
+            # creating the center co-ordinate for the char
+            x_center = (self.co_ord['x1'] + self.co_ord['x2'])/2
+            y_center = (self.co_ord['y1'] + self.co_ord['y2'])/2  
+            
+            #create text inside the container
+            self.name_text.append(self.background_canvas.create_text(x_center, y_center, text=event.char.upper(), font=('Press Start 2P', 20,), fill="black"))
+
+            # increase the co-ordinate
+            self.co_ord['x1'] += 30
+            self.co_ord['x2'] += 30
+        
+        # managing the delete
+        if event.keysym == 'BackSpace':
+            if len(self.name_container) >= 0 and (len(self.name_text)) >=0:
+                self.background_canvas.delete(self.name_container.pop())
+                self.background_canvas.delete(self.name_text.pop())
+                self.pencil_location -= 30
+                
+                #decrease the co-ordinats value as well
+                self.co_ord['x1'] -= 30
+                self.co_ord['x2'] -= 30
+                
+                # pop out from name
+                self.name.pop()
+        
+        #placing the pencil at the required phase
+        self.background_canvas.coords(self.pencil_logo, (self.pencil_location, 150))
+
+        
+            
+    
 
 class AppPage(tk.Frame):
     def __init__(self, master=None):
