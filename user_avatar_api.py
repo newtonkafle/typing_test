@@ -11,18 +11,19 @@ class Logo:
         self.params = {"seed": self.character}
         self.pencil_image = None
         self.avatar = None
+        self.avatar_bytes = None
         self.background = None
-        self.container = None
+        self.button_image = None
         self.fetch_pencil_image()
         self.fetch_avatar()
         self.fetch_background()
-        self.fetch_text_container()
+        self.fetch_button_image()
 
     def fetch_avatar(self):
         self.url = f"https://api.multiavatar.com/{self.character}.png"
         self.response = requests.get(self.url)
-        img = Image.open(BytesIO(self.response.content))
-        resized_image = img.resize((100, 100), Image.LANCZOS)
+        self.avatar_bytes = Image.open(BytesIO(self.response.content))
+        resized_image = self.avatar_bytes.resize((100, 100), Image.LANCZOS)
         self.avatar = ImageTk.PhotoImage(image=resized_image)
         
 
@@ -36,10 +37,10 @@ class Logo:
         resized_image = image.resize((700, 300), Image.LANCZOS)
         self.background = ImageTk.PhotoImage(image=resized_image)
         
-    def fetch_text_container(self):
-        image = Image.open("./logo/container.png")
-        resized_image = image.resize((50, 50), Image.LANCZOS)
-        self.container = ImageTk.PhotoImage(image=resized_image)
+    def fetch_button_image(self):
+        image = Image.open("./logo/jet.png")
+        resized_image = image.resize((128, 100), Image.LANCZOS)
+        self.button_image = ImageTk.PhotoImage(image=resized_image)
 
 if __name__ == "__main__":
     logo = Logo()

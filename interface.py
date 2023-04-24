@@ -3,6 +3,7 @@ from tkinter import StringVar, font
 from logic import Logic
 from user_avatar_api import Logo
 import random
+from useraccount import Account
 
 
 
@@ -18,10 +19,17 @@ class AppInterface(tk.Tk):
 
 class AppAccountPage(tk.Frame):
     def __init__(self, master=None):
-        tk.Frame.__init__(self, master,)
+        tk.Frame.__init__(self, master)
         master.geometry("700x300")
+        self.master = master
         self.pack()
+        # initilzing the logo class
         self.logo_api = Logo()
+        
+        # initializing the account class
+        self.db = Account()
+        
+        
         self.heading_text = "PROTYPER"
         self.color_list = ['white', 'red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'orange', 'purple', 'pink', 'gray', 'lightgray', 'darkgray', 'brown', 'navy', 'turquoise', 'violet', 'gold', 'silver']
         #binding the key pressed
@@ -74,13 +82,18 @@ class AppAccountPage(tk.Frame):
         # user avatar
         self.background_canvas.create_image(100, 150, image=self.logo_api.avatar)
         
-     
-        
         self.buid_text_container()
         
-#         # create account btn
-#         self.create_user_btn = tk.Button(self.user_frame, text="Let's Go", command="", font=("Arial, 15 bold"))
-#         self.create_user_btn.grid(row=3, column=0)
+        # go button 
+        self.button_image = self.background_canvas.create_image(350, 240, image=self.logo_api.button_image)
+        self.background_canvas.itemconfig(self.button_image, tags='button')
+        
+        # binding the button go button image to button click
+        self.background_canvas.tag_bind('button', '<Button-1>', self.on_go_button_click)
+
+        # go label
+        self.background_canvas.create_text(350, 280, text="Let's Go", font=(('Press Start 2P', 15, 'bold')))
+        
 
     def buid_text_container(self):
         x1, y1 = 200, 10
@@ -157,13 +170,27 @@ class AppAccountPage(tk.Frame):
         #placing the pencil at the required phase
         self.background_canvas.coords(self.pencil_logo, (self.pencil_location, 150))
 
-        
+    def on_go_button_click(self, event):
+        self.name = "".join(self.name)
+        if self.name != "":
+            self.db.add_account(self.name, self.logo_api.avatar_bytes.tobytes())
+            print(self.logo_api.avatar_bytes)
+            self.destroy()
+            self.frame2 = AppPage(self.master)
+        else:
+            print("name is left empty")
+        # get all the required item to insert
+        # insert the item in the database
+        # exits this frame and open next frame
+        # provide the error pop up for the empty name
             
     
 
 class AppPage(tk.Frame):
     def __init__(self, master=None):
         tk.Frame.__init__(self, master)
+        self.master = master
+        self.master.geometry("1050x450")
         self.grid()
         self.logic = Logic()
 
