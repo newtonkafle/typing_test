@@ -12,9 +12,9 @@ class AppInterface(tk.Tk):
         tk.Tk.__init__(self)
         self.title("Typing Test")
         self.geometry("1050x450")
-        self.frame = AppAccountPage(self)
-        # self.frame = AppPage(self)
-        self.bind("<Key>", self.frame.key_pressed)
+        # self.frame = AppAccountPage(self)
+        self.frame = AppPage(self)
+        # self.bind("<Key>", self.frame.key_pressed)
 
 
 class AppAccountPage(tk.Frame):
@@ -34,6 +34,8 @@ class AppAccountPage(tk.Frame):
         self.color_list = ['white', 'red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'orange', 'purple', 'pink', 'gray', 'lightgray', 'darkgray', 'brown', 'navy', 'turquoise', 'violet', 'gold', 'silver']
         #binding the key pressed
         self.bind("<Key>", self.key_pressed)
+        # master biniding
+        self.master.bind("<Key>", self.key_pressed)
         
         # name of the person
         self.name = []
@@ -175,6 +177,9 @@ class AppAccountPage(tk.Frame):
         if self.name != "":
             self.db.add_account(self.name, self.logo_api.avatar_bytes.tobytes())
             print(self.logo_api.avatar_bytes)
+            self.unbind("<Key>")
+            self.master.unbind("<Key>")
+
             self.destroy()
             self.frame2 = AppPage(self.master)
         else:
@@ -290,6 +295,8 @@ class AppPage(tk.Frame):
         self.next_lesson.grid(column=0, columnspan=2, row=10)
 
         self.bind("<Key>", self.key_pressed)
+        self.master.bind("<Key>", self.key_pressed)
+
 
         # -------- Functions to load ui items------ #
         self.logic.load_lessons()
